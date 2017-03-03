@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    log4j2日志级别：OFF、FATAL、ERROR、WARN、INFO、DEBUG、TRACE、 ALL
+
+ -->
+<!--
+    status: 打印log4j2系统日志级别控制，可以用于定位log4j2配置问题
+    monitorInterval:
+-->
+<configuration status="INFO" monitorInterval="1800">
+
+    <properties>
+        <property name="LOG_HOME">logs</property>
+        <property name="LOG_BACKUP_HOME">${LOG_HOME}/${date:yyyy-MM-dd}</property>
+        <property name="LOG_BACKUP_FILE_NAME_PATTERN">%d{yyyy-MM-dd}-%i.log.zip</property>
+        <!--  这里不能换行  -->
+        <property name="LOG_PATTERN">[%d{yyyy-MM-dd HH:mm:ss.SSS}][%-5level][%class{32}][%method][%line]:%msg%xEx%n
+        </property>
+        <property name="LOG_PATTERN_ASYNC">[%d{yyyy-MM-dd HH:mm:ss.SSS}][%-5level]:%msg%xEx%n</property>
+        <property name="LOG_SIZE">20MB</property>
+        <property name="LOG_SAVE_DAYS">30</property>
+        <property name="LOG_MIN_LEVEL">DEBUG</property>
+        <!-- 如果需要ERROR级别日志，则需要配置ERROR上一级别FATAL -->
+        <property name="LOG_MAX_LEVEL">OFF</property>
+    </properties>
+
+    <!--先定义所有的appender-->
+    <appenders>
+        <!--这个输出控制台的配置-->
+        <Console name="Console" target="SYSTEM_OUT">
+            <ThresholdFilter level="trace" onMatch="ACCEPT" onMismatch="DENY"/>
+            <!--这个都知道是输出日志的格式-->
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <!--这个会打印出所有的信息，每次大小超过size，则这size大小的日志会自动存
+        入按年份-月份建立的文件夹下面并进行压缩，作为存档
+        文件会打印出所有信息，这个log每次运行程序会自动清空，由append属性决定，这个也挺有用的，适合临时测试用
+        -->
+        <RollingFile name="AllLogFile" fileName="${LOG_HOME}/log.log"
+                     filePattern="${LOG_BACKUP_HOME}/log-${LOG_BACKUP_FILE_NAME_PATTERN}" append="true">
+            <Filters>
+                <ThresholdFilter level="${LOG_MAX_LEVEL}" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="${LOG_MIN_LEVEL}" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="${LOG_PATTERN_ASYNC}"/>
+            <Policies>
+                <!-- 设置24小时自动备份 -->
+                <TimeBasedTriggeringPolicy modulate="true" interval="24"/>
+                <!-- 设置到了指定文件大小，备份文件 -->
+                <SizeBasedTriggeringPolicy size="${LOG_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${LOG_SAVE_DAYS}"/>
+        </RollingFile>
+
+        <RollingFile name="ActionFile" fileName="${LOG_HOME}/action.log"
+                     filePattern="${LOG_BACKUP_HOME}/action-${LOG_BACKUP_FILE_NAME_PATTERN}" append="true">
+            <Filters>
+                <ThresholdFilter level="${LOG_MAX_LEVEL}" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="${LOG_MIN_LEVEL}" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="%msg%xEx%n"/>
+            <Policies>
+                <!-- 设置24小时自动备份 -->
+                <TimeBasedTriggeringPolicy modulate="true" interval="24"/>
+                <!-- 设置到了指定文件大小，备份文件 -->
+                <SizeBasedTriggeringPolicy size="${LOG_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${LOG_SAVE_DAYS}"/>
+        </RollingFile>
+
+        <!-- 第三方日志 -->
+        <RollingFile name="thirdPartyFile" fileName="${LOG_HOME}/thirdParty.log"
+                     filePattern="${LOG_BACKUP_HOME}/thirdParty-${LOG_BACKUP_FILE_NAME_PATTERN}" append="false">
+            <Filters>
+                <ThresholdFilter level="${LOG_MAX_LEVEL}" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="${LOG_MIN_LEVEL}" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <!-- 设置24小时自动备份 -->
+                <TimeBasedTriggeringPolicy modulate="true" interval="24"/>
+                <!-- 设置到了指定文件大小，备份文件 -->
+                <SizeBasedTriggeringPolicy size="${LOG_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${LOG_SAVE_DAYS}"/>
+        </RollingFile>
+
+        <!-- 异常日志  -->
+        <RollingFile name="errorLogFile" fileName="${LOG_HOME}/error.log"
+                     filePattern="${LOG_BACKUP_HOME}/error-${LOG_BACKUP_FILE_NAME_PATTERN}">
+            <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <!-- 设置24小时自动备份 -->
+                <TimeBasedTriggeringPolicy modulate="true" interval="24"/>
+                <!-- 设置到了指定文件大小，备份文件 -->
+                <SizeBasedTriggeringPolicy size="${LOG_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${LOG_SAVE_DAYS}"/>
+        </RollingFile>
+
+        <!-- 警告日志  -->
+        <RollingFile name="warnLogFile" fileName="${LOG_HOME}/warn.log"
+                     filePattern="${LOG_BACKUP_HOME}/warn-${LOG_BACKUP_FILE_NAME_PATTERN}">
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="DENY" onMismatch="NEUTRAL"/>
+                <ThresholdFilter level="WARN" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <!-- 设置24小时自动备份 -->
+                <TimeBasedTriggeringPolicy modulate="true" interval="24"/>
+                <!-- 设置到了指定文件大小，备份文件 -->
+                <SizeBasedTriggeringPolicy size="${LOG_SIZE}"/>
+            </Policies>
+            <DefaultRolloverStrategy max="${LOG_SAVE_DAYS}"/>
+        </RollingFile>
+
+        <!--        &lt;!&ndash; 异步日志  &ndash;&gt;
+                <RollingFile name="asyncRollingFile" fileName="${LOG_HOME}/asynclog.log"
+                             filePattern="${LOG_BACKUP_HOME}/asynclog-${LOG_BACKUP_FILE_NAME_PATTERN}">
+                    <Filters>
+                        <ThresholdFilter level="${LOG_MAX_LEVEL}" onMatch="DENY" onMismatch="NEUTRAL"/>
+                        <ThresholdFilter level="${LOG_MIN_LEVEL}" onMatch="ACCEPT" onMismatch="DENY"/>
+                    </Filters>
+                    &lt;!&ndash; 异步日志打印不出：[%class{32}][%method][%line] &ndash;&gt;
+                    <PatternLayout pattern="LOG_PATTERN_ASYNC"/>
+                    <Policies>
+                        &lt;!&ndash; 设置24小时自动备份 &ndash;&gt;
+                        <TimeBasedTriggeringPolicy modulate="true" interval="24"/>
+                        &lt;!&ndash; 设置到了指定文件大小，备份文件 &ndash;&gt;
+                        <SizeBasedTriggeringPolicy size="${LOG_SIZE}"/>
+                    </Policies>
+                    <DefaultRolloverStrategy max="${LOG_SAVE_DAYS}"/>
+                </RollingFile>-->
+
+        <!-- 异步日志 -->
+        <Async name="Async">
+            <!--<AppenderRef ref="asyncRollingFile"/>-->
+            <AppenderRef ref="AllLogFile"/>
+        </Async>
+    </appenders>
+
+    <!--然后定义logger，只有定义了logger并引入的appender，appender才会生效-->
+    <loggers>
+        <!-- 3rdparty Loggers -->
+        <logger name="org.springframework.core" level="INFO" additivity="false">
+            <appender-ref ref="thirdPartyFile"/>
+            <appender-ref ref="warnLogFile"/>
+            <appender-ref ref="errorLogFile"/>
+        </logger>
+
+        <!-- 3rdparty end -->
+
+        <!--建立一个默认的root的logger-->
+        <root level="info">
+            <appender-ref ref="Console"/>
+            <appender-ref ref="Async"/>
+            <appender-ref ref="warnLogFile"/>
+            <appender-ref ref="errorLogFile"/>
+            <!--<appender-ref ref="AllLogFile"/>-->
+        </root>
+
+    </loggers>
+</configuration>
